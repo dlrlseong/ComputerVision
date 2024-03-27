@@ -103,7 +103,7 @@ class AttentionRefinementModule(nn.Module):
         self.conv = ConvBNReLU(in_chan, out_chan, ks=3, stride=1, padding=1)
         self.conv_atten = nn.Conv2d(out_chan, out_chan, kernel_size=1, bias=False)
         self.bn_atten = BatchNorm2d(out_chan)
-        #  self.sigmoid_atten = nn.Sigmoid()
+        self.sigmoid_atten = nn.Sigmoid()
         self.init_weight()
 
     def forward(self, x):
@@ -111,8 +111,7 @@ class AttentionRefinementModule(nn.Module):
         atten = torch.mean(feat, dim=(2, 3), keepdim=True)
         atten = self.conv_atten(atten)
         atten = self.bn_atten(atten)
-        #  atten = self.sigmoid_atten(atten)
-        atten = atten.sigmoid()
+        atten = self.sigmoid_atten(atten)
         out = torch.mul(feat, atten)
         return out
 
@@ -193,11 +192,11 @@ class SpatialPath(nn.Module):
         return feat
 
     def init_weight(self):
-        for ly in self.children():
-            if isinstance(ly, nn.Conv2d):
-                nn.init.kaiming_normal_(ly.weight, a=1)
-                if not ly.bias is None:
-                    nn.init.constant_(ly.bias, 0)
+        for layer in self.children():
+            if isinstance(layer, nn.Conv2d):
+                nn.init.kaiming_normal_(layer.weight, a=1)
+                if not layer.bias is None:
+                    nn.init.constant_(layer.bias, 0)
 
     def get_params(self):
         wd_params, nowd_params = [], []
